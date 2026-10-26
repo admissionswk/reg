@@ -7,7 +7,7 @@ const CONFIG = {
   // URL ของ Google Apps Script Web App
   // หลัง Deploy แล้ว ให้นำ URL มาวางที่นี่
   // ตัวอย่าง: 'https://script.google.com/macros/s/AKfy.../exec'
-  APPS_SCRIPT_URL: 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec',
+  APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbwfUJGrNz6tYc8TY27AOCakd6eIY85_kVBXDUsx7hiZps--RZi1oB9kDtHvYo7SdEQ0/exec',
 
   // ชื่อโรงเรียน (จะถูก override โดยข้อมูลจาก Google Sheet)
   SCHOOL_NAME: 'ระบบลงทะเบียนวิชาเลือก',
