@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>สรุปการลงทะเบียนวิชาเลือก</title>
+  <meta name="description" content="รายงานสรุปจำนวนนักเรียนที่ลงทะเบียนวิชาเลือก">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar">
+  <div class="container">
+    <a href="index.html" class="navbar-brand">
+      <div class="logo-icon">📚</div>
+      <div class="brand-text">
+        <span class="school-name">ระบบลงทะเบียนวิชาเลือก</span>
+        <small>รายงานสรุป</small>
+      </div>
+    </a>
+    <div class="navbar-links">
+      <a href="index.html">🎓 ลงทะเบียน</a>
+      <a href="admin.html">🔧 ครู/Admin</a>
+    </div>
+  </div>
+</nav>
+
+<main class="container" style="padding-top:40px;padding-bottom:60px;">
+
+  <div class="hero" style="padding-top:10px;">
+    <div class="hero-badge">📊 สาธารณะ</div>
+    <h1>สรุปการลงทะเบียนวิชาเลือก</h1>
+    <p>ข้อมูลอัปเดตล่าสุด: <span id="lastUpdate">-</span></p>
+  </div>
+
+  <!-- Summary Stats -->
+  <div class="stat-grid" id="summaryStats">
+    <div class="stat-card">
+      <div class="stat-icon blue">📚</div>
+      <div>
+        <div class="stat-value" id="totalSubjects">-</div>
+        <div class="stat-label">วิชาทั้งหมด</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon green">👥</div>
+      <div>
+        <div class="stat-value" id="totalStudents">-</div>
+        <div class="stat-label">นักเรียนลงทะเบียนแล้ว</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div id="reportLoading" class="loading-overlay">
+    <div class="spinner" style="width:40px;height:40px;border-width:4px;"></div>
+    <p>กำลังโหลดข้อมูล...</p>
+  </div>
+
+  <!-- Report Grid -->
+  <div id="reportGrid" class="hidden" style="display:none;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px;"></div>
+
+  <!-- Table -->
+  <div id="reportTableWrap" class="hidden mt-3">
+    <div class="d-flex justify-between align-center mb-2" style="flex-wrap:wrap;gap:10px;">
+      <div style="font-weight:600;font-size:1rem;">📋 ตารางสรุป</div>
+      <button class="btn btn-secondary btn-sm" onclick="loadReport()">🔄 รีเฟรช</button>
+    </div>
+    <div class="table-wrapper">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>วิชา</th>
+            <th>ครูผู้สอน</th>
+            <th>ลงทะเบียนแล้ว</th>
+            <th>จำนวนรับ</th>
+            <th>สัดส่วน</th>
+          </tr>
+        </thead>
+        <tbody id="reportTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</main>
+
+<footer style="text-align:center;padding:24px;color:var(--text-muted);font-size:0.8rem;border-top:1px solid var(--border);">
+  อัปเดตอัตโนมัติทุก 1 นาที
+</footer>
+
+<script src="js/config.js"></script>
+<script>
+async function loadReport() {
+  const url = new URL(CONFIG.APPS_SCRIPT_URL);
+  url.searchParams.set('action', 'getReport');
+  try {
+    const res = await fetch(url.toString());
+    const data = await res.json();
+    if (!data.success) throw new Error(data.message);
+
+    document.getElementById('reportLoading').style.display = 'none';
+    document.getElementById('totalSubjects').textContent = data.report.length;
+    document.getElementById('totalStudents').textContent = data.totalStudents;
+    document.getElementById('lastUpdate').textContent = new Date().toLocaleString('th-TH');
+
+    // Cards
+    const grid = document.getElementById('reportGrid');
+    const subjectIcons = ['📚','🎨','🔬','🎵','💻','⚽','🍳','🌿','🏛️','🎭','🧮','🌍'];
+    grid.style.display = 'grid';
+    grid.classList.remove('hidden');
+    grid.innerHTML = data.report.map((s, i) => {
+      const pct = s.percent;
+      const barClass = pct >= 90 ? 'full-bar' : pct >= 70 ? 'almost-full' : '';
+      const badgeClass = pct >= 90 ? 'badge-danger' : pct >= 70 ? 'badge-warning' : 'badge-success';
+      const badgeText = pct >= 100 ? 'เต็ม' : pct >= 70 ? 'ใกล้เต็ม' : 'ยังว่าง';
+      return `
+        <div class="card" style="cursor:default;">
+          <div class="subject-card-header">
+            <div class="subject-icon">${subjectIcons[i % subjectIcons.length]}</div>
+            <div>
+              <div class="subject-card-title">${s.name}</div>
+              <div class="subject-card-teacher">👤 ${s.teacher || 'ไม่ระบุ'}</div>
+            </div>
+          </div>
+          <div class="d-flex align-center justify-between mb-1">
+            <span class="badge ${badgeClass}">${badgeText}</span>
+            <span style="font-size:1.4rem;font-weight:700;color:var(--text-primary);">${s.enrolled} <span style="font-size:0.8rem;font-weight:400;color:var(--text-secondary);">/ ${s.max_seats}</span></span>
+          </div>
+          <div class="seat-bar-wrap">
+            <div class="seat-bar-label">
+              <span>ที่นั่งที่ใช้</span><span>${pct}%</span>
+            </div>
+            <div class="seat-bar" style="height:8px;">
+              <div class="seat-bar-fill ${barClass}" style="width:${Math.min(pct,100)}%;"></div>
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+
+    // Table
+    const tbody = document.getElementById('reportTableBody');
+    tbody.innerHTML = data.report.map((s, i) => `
+      <tr>
+        <td style="color:var(--text-muted);">${i+1}</td>
+        <td><strong>${s.name}</strong></td>
+        <td style="color:var(--text-secondary);">${s.teacher || '-'}</td>
+        <td><strong style="font-size:1.05rem;">${s.enrolled}</strong></td>
+        <td>${s.max_seats}</td>
+        <td>
+          <div style="display:flex;align-items:center;gap:10px;min-width:120px;">
+            <div class="seat-bar" style="flex:1;height:5px;">
+              <div class="seat-bar-fill ${s.percent>=90?'full-bar':s.percent>=70?'almost-full':''}" style="width:${Math.min(s.percent,100)}%"></div>
+            </div>
+            <span style="font-size:0.82rem;color:var(--text-secondary);width:35px;">${s.percent}%</span>
+          </div>
+        </td>
+      </tr>`).join('');
+    document.getElementById('reportTableWrap').classList.remove('hidden');
+
+  } catch(err) {
+    document.getElementById('reportLoading').innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">⚠️</div>
+        <h3>โหลดข้อมูลไม่สำเร็จ</h3>
+        <p>${err.message}</p>
+        <button class="btn btn-secondary mt-2" onclick="loadReport()">ลองใหม่</button>
+      </div>`;
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadReport();
+  setInterval(loadReport, 60000); // auto refresh every 1 min
+});
+</script>
+</body>
+</html>

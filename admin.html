@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ครู/Admin — ระบบลงทะเบียนวิชาเลือก</title>
+  <meta name="description" content="หน้าจัดการระบบลงทะเบียนวิชาเลือกสำหรับครู">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- Toast -->
+<div id="toastContainer" class="toast-container"></div>
+
+<!-- Navbar -->
+<nav class="navbar">
+  <div class="container">
+    <a href="index.html" class="navbar-brand">
+      <div class="logo-icon">📚</div>
+      <div class="brand-text">
+        <span class="school-name">ระบบลงทะเบียนวิชาเลือก</span>
+        <small>Admin Panel</small>
+      </div>
+    </a>
+    <div class="navbar-links">
+      <a href="index.html">🎓 หน้านักเรียน</a>
+      <a href="report.html">📊 รายงาน</a>
+      <button class="btn btn-secondary btn-sm" onclick="adminLogout()" id="logoutBtn" style="display:none">ออกจากระบบ</button>
+    </div>
+  </div>
+</nav>
+
+<main class="container" style="padding-top:40px;padding-bottom:60px;">
+
+  <!-- ================ LOGIN ================ -->
+  <section id="adminLoginSection">
+    <div class="hero" style="padding-top:20px;">
+      <div class="hero-badge">🔧 Admin</div>
+      <h1>เข้าสู่ระบบ Admin</h1>
+      <p>สำหรับครูผู้ดูแลระบบลงทะเบียนวิชาเลือก</p>
+    </div>
+
+    <div style="max-width:380px;margin:0 auto;">
+      <div class="card">
+        <div class="card-title">🔑 Admin Login</div>
+        <div class="card-subtitle">ใส่รหัสผ่านเพื่อเข้าจัดการระบบ</div>
+        <div id="adminLoginError" class="alert alert-danger hidden"></div>
+        <form id="adminLoginForm">
+          <div class="form-group">
+            <label for="adminPassword">รหัสผ่าน Admin</label>
+            <input type="password" id="adminPassword" class="form-control"
+              placeholder="Admin Password" required autocomplete="current-password">
+          </div>
+          <button type="submit" id="adminLoginBtn" class="btn btn-primary btn-block">
+            🔑 เข้าสู่ระบบ
+          </button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================ ADMIN PANEL ================ -->
+  <section id="adminPanel" class="hidden">
+
+    <!-- Dashboard Stats -->
+    <div class="hero" style="padding:20px 0 10px; text-align:left;">
+      <h1 style="font-size:1.8rem;">🏫 แดชบอร์ดครู</h1>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-icon blue">📚</div>
+        <div>
+          <div class="stat-value" id="statSubjects">-</div>
+          <div class="stat-label">วิชาทั้งหมด</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon green">👥</div>
+        <div>
+          <div class="stat-value" id="statStudents">-</div>
+          <div class="stat-label">นักเรียนลงทะเบียนแล้ว</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon purple">📋</div>
+        <div>
+          <div class="stat-value" id="statRegs">-</div>
+          <div class="stat-label">รายการลงทะเบียน</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon yellow">🪑</div>
+        <div>
+          <div class="stat-value" id="statSeats">-</div>
+          <div class="stat-label">ที่นั่งรวมทั้งหมด</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab-btn" id="tab-subjects-btn" onclick="switchTab('tab-subjects')">
+        📚 จัดการวิชา
+      </button>
+      <button class="tab-btn" id="tab-registrations-btn" onclick="switchTab('tab-registrations')">
+        📋 รายการลงทะเบียน
+      </button>
+      <button class="tab-btn" id="tab-students-btn" onclick="switchTab('tab-students')">
+        👥 นักเรียน
+      </button>
+      <button class="tab-btn" id="tab-settings-btn" onclick="switchTab('tab-settings')">
+        ⚙️ ตั้งค่า
+      </button>
+    </div>
+
+    <!-- ============ TAB: SUBJECTS ============ -->
+    <div class="tab-panel" id="tab-subjects-panel">
+      <div class="d-flex justify-between align-center mb-2" style="flex-wrap:wrap;gap:10px;">
+        <div style="font-size:1rem;font-weight:600;">📚 รายวิชาเลือกทั้งหมด</div>
+        <div class="d-flex gap-1">
+          <button class="btn btn-secondary btn-sm" onclick="loadSubjectsAdmin()">🔄 รีเฟรช</button>
+          <button class="btn btn-primary" onclick="openAddModal()">➕ เพิ่มวิชาใหม่</button>
+        </div>
+      </div>
+
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>รหัส</th>
+              <th>ชื่อวิชา</th>
+              <th>ครูผู้สอน</th>
+              <th>ที่นั่ง</th>
+              <th>ชั้น/ห้องที่เปิด</th>
+              <th>เลือกได้</th>
+              <th>สถานะ</th>
+              <th>จัดการ</th>
+            </tr>
+          </thead>
+          <tbody id="subjectsTableBody">
+            <tr><td colspan="8" class="text-center" style="padding:40px;">
+              <div class="spinner"></div>
+            </td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ============ TAB: REGISTRATIONS ============ -->
+    <div class="tab-panel" id="tab-registrations-panel">
+      <div class="d-flex justify-between align-center mb-2" style="flex-wrap:wrap;gap:10px;">
+        <div>
+          <span style="font-size:1rem;font-weight:600;">📋 รายการลงทะเบียน</span>
+          <span class="badge badge-accent" style="margin-left:8px;" id="regCount">0</span>
+        </div>
+        <div class="d-flex gap-1">
+          <button class="btn btn-secondary btn-sm" onclick="loadRegistrationsAdmin()">🔄 รีเฟรช</button>
+          <button class="btn btn-success btn-sm" onclick="exportCSV()">📥 Export CSV</button>
+        </div>
+      </div>
+
+      <!-- Filter Bar -->
+      <div class="filter-bar">
+        <div class="form-group">
+          <label>ค้นหา (รหัส/ชื่อ)</label>
+          <input type="text" id="regSearch" class="form-control" placeholder="ค้นหา..." oninput="filterRegistrations()">
+        </div>
+        <div class="form-group">
+          <label>ชั้น</label>
+          <select id="regGradeFilter" class="form-control" onchange="filterRegistrations()">
+            <option value="">ทุกชั้น</option>
+            <option value="1">ม.1</option>
+            <option value="2">ม.2</option>
+            <option value="3">ม.3</option>
+            <option value="4">ม.4</option>
+            <option value="5">ม.5</option>
+            <option value="6">ม.6</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>วิชา</label>
+          <input type="text" id="regSubjectFilter" class="form-control" placeholder="ชื่อวิชา..." oninput="filterRegistrations()">
+        </div>
+      </div>
+
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>รหัสนักเรียน</th>
+              <th>ชื่อ-สกุล</th>
+              <th>ชั้น/ห้อง</th>
+              <th>วิชาที่ลงทะเบียน</th>
+              <th>วันที่</th>
+              <th>Email</th>
+            </tr>
+          </thead>
+          <tbody id="regTableBody">
+            <tr><td colspan="7" class="text-center" style="padding:40px;">
+              <div class="spinner"></div>
+            </td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ============ TAB: STUDENTS ============ -->
+    <div class="tab-panel" id="tab-students-panel">
+      <div id="studentsPanel">
+        <div class="loading-overlay"><div class="spinner"></div><p>กำลังโหลด...</p></div>
+      </div>
+    </div>
+
+    <!-- ============ TAB: SETTINGS ============ -->
+    <div class="tab-panel" id="tab-settings-panel">
+      <div style="max-width:500px;">
+        <div class="card">
+          <div class="card-title">⚙️ การตั้งค่าระบบ</div>
+          <div class="card-subtitle">กำหนดค่าพื้นฐานของระบบลงทะเบียน</div>
+
+          <div class="form-group">
+            <label>ชื่อโรงเรียน</label>
+            <input type="text" id="settingSchoolName" class="form-control" placeholder="ชื่อโรงเรียน">
+          </div>
+
+          <div class="form-group">
+            <div class="toggle-wrap">
+              <label class="toggle">
+                <input type="checkbox" id="settingRegOpen">
+                <span class="toggle-slider"></span>
+              </label>
+              <div>
+                <div style="font-weight:600;font-size:0.95rem;">เปิดรับการลงทะเบียน</div>
+                <div style="font-size:0.8rem;color:var(--text-secondary);">ปิดสวิตช์เพื่อหยุดรับการลงทะเบียนทันที</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>รหัสผ่าน Admin ใหม่</label>
+            <input type="password" id="settingAdminPass" class="form-control" placeholder="เว้นว่างถ้าไม่ต้องการเปลี่ยน">
+            <small id="settingAdminPassHint" style="color:var(--text-muted);font-size:0.78rem;">(เว้นว่างถ้าไม่ต้องการเปลี่ยน)</small>
+          </div>
+
+          <button class="btn btn-primary" id="saveSettingsBtn" onclick="saveSettings()">
+            💾 บันทึกการตั้งค่า
+          </button>
+        </div>
+
+        <div class="card mt-2" style="padding:18px 22px;">
+          <div class="card-title" style="font-size:0.95rem;margin-bottom:10px;">🔗 ลิงก์ระบบ</div>
+          <div style="display:flex;flex-direction:column;gap:8px;font-size:0.85rem;">
+            <div class="d-flex gap-2 align-center">
+              <span>🎓 หน้านักเรียน:</span>
+              <a href="index.html" target="_blank" style="color:var(--primary-light);word-break:break-all;">index.html</a>
+            </div>
+            <div class="d-flex gap-2 align-center">
+              <span>📊 รายงาน:</span>
+              <a href="report.html" target="_blank" style="color:var(--primary-light);">report.html</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </section><!-- end adminPanel -->
+
+</main>
+
+<!-- ============ MODAL: Add/Edit Subject ============ -->
+<div id="subjectModal" class="modal-overlay hidden" onclick="if(event.target===this)closeSubjectModal()">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle">➕ เพิ่มวิชาเลือกใหม่</div>
+      <button class="modal-close" onclick="closeSubjectModal()">✕</button>
+    </div>
+
+    <form id="subjectForm">
+      <input type="hidden" id="subjectFormId">
+
+      <div class="form-group">
+        <label for="subjectFormName">ชื่อวิชา <span style="color:var(--danger)">*</span></label>
+        <input type="text" id="subjectFormName" class="form-control" placeholder="เช่น ศิลปะสร้างสรรค์" required>
+      </div>
+
+      <div class="form-group">
+        <label for="subjectFormDesc">คำอธิบายวิชา</label>
+        <textarea id="subjectFormDesc" class="form-control" rows="2" placeholder="รายละเอียดวิชาโดยย่อ"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="subjectFormTeacher">ครูผู้สอน</label>
+        <input type="text" id="subjectFormTeacher" class="form-control" placeholder="ชื่อครูผู้สอน">
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <div class="form-group">
+          <label for="subjectFormMaxSeats">จำนวนรับ (ที่นั่ง)</label>
+          <input type="number" id="subjectFormMaxSeats" class="form-control" value="30" min="1" required>
+        </div>
+        <div class="form-group">
+          <label for="subjectFormMaxChoices">เลือกได้กี่วิชา</label>
+          <input type="number" id="subjectFormMaxChoices" class="form-control" value="2" min="1" max="10" required>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="subjectFormGrades">
+          ชั้นที่เปิดให้ลงทะเบียน
+          <span style="font-size:0.75rem;color:var(--text-muted);font-weight:400;"> (all = ทุกชั้น / ระบุ: 4,5,6)</span>
+        </label>
+        <input type="text" id="subjectFormGrades" class="form-control" value="all" placeholder="all หรือ 4,5,6">
+      </div>
+
+      <div class="form-group">
+        <label for="subjectFormRooms">
+          ห้องที่เปิดให้ลงทะเบียน
+          <span style="font-size:0.75rem;color:var(--text-muted);font-weight:400;"> (all = ทุกห้อง / ระบุ: 1,2,3)</span>
+        </label>
+        <input type="text" id="subjectFormRooms" class="form-control" value="all" placeholder="all หรือ 1,2,3">
+      </div>
+
+      <div class="form-group">
+        <div class="toggle-wrap">
+          <label class="toggle">
+            <input type="checkbox" id="subjectFormActive" checked>
+            <span class="toggle-slider"></span>
+          </label>
+          <div style="font-size:0.9rem;font-weight:500;">เปิดรับลงทะเบียน</div>
+        </div>
+      </div>
+
+      <div class="d-flex gap-2 mt-2">
+        <button type="button" class="btn btn-secondary" onclick="closeSubjectModal()" style="flex:1;">ยกเลิก</button>
+        <button type="submit" id="saveSubjectBtn" class="btn btn-primary" style="flex:2;">💾 บันทึก</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Scripts -->
+<script src="js/config.js"></script>
+<script src="js/admin.js"></script>
+<script>
+  // Show logout button when logged in
+  const origShowAdminPanel = showAdminPanel;
+  async function showAdminPanel() {
+    document.getElementById('logoutBtn').style.display = 'inline-flex';
+    await origShowAdminPanel();
+  }
+</script>
+
+</body>
+</html>
